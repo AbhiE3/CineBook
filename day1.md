@@ -81,6 +81,41 @@ The dark look came entirely from shared theme tokens, so the conversion was cent
 ### 3.3 Migrated to a flat, 3‑file component convention
 Every component was restructured to **`[name].ts` + `[name].html` + `[name].css`** (no `.component` suffix, no inline templates). Files migrated: `app`, `icon`, `navbar`, `home`, `login`, `register`. Import paths in [main.ts](frontend/src/main.ts) and [app.routes.ts](frontend/src/app/app.routes.ts) were updated and the old `*.component.ts` files deleted. **This convention is the standard for all future components.** A development build passes cleanly.
 
+### 3.4 Wrapped controller responses in `ResponseEntity`
+The [AuthController](backend/src/main/java/com/cinebook/controller/AuthController.java) originally returned bare DTOs (e.g. `public AuthResponse register(...)`). With that style Spring always replies **`200 OK`**, even when a brand‑new account is created. We changed all three endpoints to return **`ResponseEntity<AuthResponse>`** so we control the status code explicitly:
+
+| Endpoint | Before | After |
+|---|---|---|
+| `POST /api/auth/register` | `200 OK` | **`201 Created`** |
+| `POST /api/auth/register-admin` | `200 OK` | **`201 Created`** |
+| `POST /api/auth/login` | `200 OK` | **`200 OK`** (explicit) |
+
+```java
+@PostMapping("/register")
+public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
+}
+
+@PostMapping("/login")
+public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+    return ResponseEntity.ok(authService.login(request));
+}
+```
+
+> No frontend change was needed: `201` and `200` are both `2xx`, so Angular's `HttpClient` still treats them as success and parses the body identically.
+
+#### Why use `ResponseEntity`? (benefits)
+`ResponseEntity<T>` is Spring's representation of a **complete HTTP response** — status line, headers, and body — instead of just the body. Benefits:
+
+1. **Explicit, correct status codes.** A bare return value always means `200 OK`. `ResponseEntity` lets each endpoint say exactly what happened — `201 Created` for a new resource, `204 No Content` for a delete, `200 OK` for a read — which is what REST clients and standards expect.
+2. **Control over response headers.** You can set headers such as `Location` (the URL of a newly created resource), `Cache-Control`, or `ETag` — impossible when returning the body alone.
+3. **Conditional / dynamic responses.** A single method can branch — e.g. `return found ? ResponseEntity.ok(dto) : ResponseEntity.notFound().build();` — returning different statuses from the same handler.
+4. **Consistency with the rest of the codebase.** Our [GlobalExceptionHandler](backend/src/main/java/com/cinebook/exception/GlobalExceptionHandler.java) already returns `ResponseEntity` for errors; using it on the happy path too makes the whole API uniform.
+5. **Self‑documenting & testable.** The method signature now advertises the response shape, and tests/tools (MockMvc, Swagger) can assert on status and headers, not just the JSON body.
+6. **Fluent, readable builders.** Helpers like `ResponseEntity.ok(...)`, `.created(uri)`, `.noContent()`, and `.status(...).body(...)` keep controllers concise and intention‑revealing.
+
+> **Trade‑off:** for simple endpoints that always return `200 OK`, a bare DTO is shorter. The convention going forward is to **use `ResponseEntity` whenever the status code isn't a plain `200` or when headers matter** (creates, deletes, conditional reads), which covers most of the Day 2+ endpoints.
+
 ---
 
 ## 4. Features pending (not yet built)
