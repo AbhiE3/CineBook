@@ -135,7 +135,7 @@ sequenceDiagram
 `registerAdmin` does the same but also creates a `Theater` row and links it back to the admin
 (`user.theaterId`). The response carries the token, so a freshly registered user is **immediately
 logged in** — no second round-trip.
-
+```mermaid
 sequenceDiagram
     participant UI as Angular (login.ts)
     participant AS as auth.service.ts
@@ -165,7 +165,7 @@ sequenceDiagram
         C-->>AS: 401 Unauthorized
         AS-->>UI: show "Invalid username or password"
     end
-
+```
 Crucially, the server never compares plaintext — `passwordEncoder.matches()` re-hashes the
 submitted password and compares hashes. (This is why the legacy plaintext accounts can no longer
 log in and the dev data must be reset.)
