@@ -25,7 +25,7 @@ The live instance parameters listed below must be directly injected into the Spr
 | **Port** | `3306` |
 | **Database Name** | `cinebook_data` |
 | **Database User** | `cinebook_kiran` |
-| **Database Password** | *The private password you assigned during creation* |
+| **Database Password** | `kiran@938145` |
 
 ---
 
