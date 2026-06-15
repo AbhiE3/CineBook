@@ -75,6 +75,22 @@ export const routes: Routes = [
       import("./features/user/my-bookings/my-bookings").then((m) => m.MyBookingsComponent)
   },
   {
+    path: "payment/success",
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import("./features/user/payment-success/payment-success").then(
+        (m) => m.PaymentSuccessComponent
+      )
+  },
+  {
+    path: "payment/cancel",
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import("./features/user/payment-cancel/payment-cancel").then(
+        (m) => m.PaymentCancelComponent
+      )
+  },
+  {
     path: "",
     pathMatch: "full",
     redirectTo: "movies"
