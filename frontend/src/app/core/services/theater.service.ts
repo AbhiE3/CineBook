@@ -34,9 +34,9 @@ export class TheaterService {
     return this.http.get<Theater[]>(this.base).pipe(tap((list) => this.theaters.set(list)));
   }
 
-  loadByLocation(location: string): Observable<Theater[]> {
-    return this.http
-      .get<Theater[]>(this.base, { params: { location } })
-      .pipe(tap((list) => this.theaters.set(list)));
-  }
+  // loadByLocation(location: string): Observable<Theater[]> {
+  //   return this.http
+  //     .get<Theater[]>(this.base, { params: { location } })
+  //     .pipe(tap((list) => this.theaters.set(list)));
+  // }
 }
